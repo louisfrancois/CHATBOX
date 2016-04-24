@@ -1,0 +1,57 @@
+<html>
+<head>
+    <title>Chat with socket.io and node.js</title>
+    <style>
+        #chat {
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat"></div>
+    <form id="send-message">
+      <input size="35" id="message"/>
+      <input type="submit" />
+    </form>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+
+    <!-- Socket IO generator -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Script to allow client to send messages to the server -->
+    <script>
+        jQuery(function($) {
+            // get the socket functionalities
+            var socket = io.connect();
+
+            // variables
+            var $messageForm = $('#send-message');
+            var $messageBox = $('#message');
+            var $chat = $('#chat');
+
+            // bind the event handler to the messageForm by attaching
+            // a submit handler to the messageForm
+            $messageForm.submit(function(e) {
+
+                // prevent the form to submit and refresh the page
+                e.preventDefault();
+
+                // send message to the server ('emit' sends an event to the server)
+                socket.emit('send message', $messageBox.val());
+
+                // clear messageBox's value
+                $messageBox.val('');
+            });
+
+            // receive the message on the client side
+            socket.on('new message', function(data) {
+
+                // display the message so we can see it
+                $chat.append(data + "<br/>");
+
+            });
+
+        });
+    </script>
+</body>
+</html>
