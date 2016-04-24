@@ -66,11 +66,61 @@ io.sockets.on('connection', function(socket) {
 
 
     // do something with our sent data (in 'send message') by using a function
-    socket.on('send message', function(data) {
+    socket.on('send message', function(data, callback) {
 
-        // send message to all the other users. Create a name ('new message')
-        // for the events to broadcast to other users.
-        io.sockets.emit('new message', {msg: data, nick: socket.nickname});
+        // trim the message to take care of whitespace in message for private
+        // messaging where you can whisper to somebody in the chat using
+        // '/w' before the message.
+        var msg = data.trim();
+        if(msg.substr(0,3) === '/w ') {
+
+            // use the message from the start of the user name onwards
+            msg = msg.substr(3);
+
+            // find the index of the first space which should come right after
+            // the name.
+            var ind = msg.indexOf(' ');
+
+            // if the index not -1, whisper working
+            if (ind !== -1) {
+
+                // check to see usename is valid by finding the substring of the
+                // message up until the index of the space
+                var name = msg.substring(0, ind);
+
+                // start of message is the character indexed right after the space
+                // till the end
+                var msg = msg.substring(ind + 1);
+
+                // if the name is in the user object, then it's a whisper
+                if(name in users) {
+
+                    // emit using the socket of the user we're whispering to.
+                    // since the socket is saved in the users object, we can
+                    // access it (change event name to 'whisper')
+                    users[name].emit('whisper', {msg: msg, nick: socket.nickname});
+
+                    console.log('Whisper!');
+                } else {
+
+                    // if not in user object send an error callback.
+                    callback('Error: Enter a valid user.');
+                }
+
+            } else {
+
+                // if there is no space, then basically no message was put in
+                // so we want to give them some sort of callback message (add
+                // message we want to display in the callback)
+                callback("Error! Please enter a message for your whisper.");
+            }
+
+
+        } else {
+            // send trimmed message ('msg' and not the entire 'data')to all the other users. Create a name ('new message')
+            // for the events to broadcast to other users.
+            io.sockets.emit('new message', {msg: msg, nick: socket.nickname});
+        }
 
     });
 

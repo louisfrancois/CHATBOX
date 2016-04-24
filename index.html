@@ -12,6 +12,13 @@
             float: left;
             border: 1px #000 solid;
         }
+        .error {
+            color: red;
+        }
+        .whisper {
+            color: grey;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -96,7 +103,11 @@
                 e.preventDefault();
 
                 // send message to the server ('emit' sends an event to the server)
-                socket.emit('send message', $messageBox.val());
+                // and the callback message for when no msg is inputed on client
+                // side.
+                socket.emit('send message', $messageBox.val(), function(data) {
+                    $chat.append('<span class="error"><b>' + data + "</span><br/>");
+                });
 
                 // clear messageBox's value
                 $messageBox.val('');
@@ -106,7 +117,15 @@
             socket.on('new message', function(data) {
 
                 // display the message so we can see it
-                $chat.append('<b>' + data.nick + ': </b>' + data.msg + "<br/>");
+                $chat.append('<span class="msg"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
+
+            });
+
+            // receive the whisper on the client side
+            socket.on('whisper', function(data) {
+
+              // display the message styled differently
+              $chat.append('<span class="whisper"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
 
             });
 
