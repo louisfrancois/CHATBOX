@@ -9,8 +9,8 @@ var express = require('express'),
     // create the socket functionality and maake it listen our http object
     io = require('socket.io').listen(server),
 
-    // array of nicknames
-    nicknames = [];
+    // object of nicknames
+    users = {};
 
 // tell the server what port to listen on
 server.listen(3000);
@@ -25,7 +25,7 @@ app.get('/', function(req, res) {
 });
 
 // receive the event on the server side. Whenever a client connects to a socket.io
-// application, they turn on a connection event
+// application, they turn on a connection event and they have their own socket
 io.sockets.on('connection', function(socket) {
 
     // receive event on nicknames. we also pass in callback because we're
@@ -33,7 +33,7 @@ io.sockets.on('connection', function(socket) {
     socket.on('new user', function (data, callback) {
 
         // check if user name entered in array
-        if (nicknames.indexOf(data) != -1) {
+        if (data in users) {
 
             // send false back to the callback if index of whatever inputed
             // nickname not existant
@@ -46,8 +46,8 @@ io.sockets.on('connection', function(socket) {
             // property of the socket.
             socket.nickname = data;
 
-            // push this value onto the array
-            nicknames.push(socket.nickname);
+            // save the socket
+            users[socket.nickname] = socket;
 
             // update user list on the client side
             updateNicknames();
@@ -58,8 +58,9 @@ io.sockets.on('connection', function(socket) {
     function updateNicknames() {
 
       // emit nicknames array to all the users so that they can updates
-      // their list when someone joins
-      io.sockets.emit('usernames', nicknames);
+      // their list when someone joins. Send the keys to the object to the client
+      // side
+      io.sockets.emit('usernames', Object.keys(users));
 
     }
 
@@ -79,8 +80,8 @@ io.sockets.on('connection', function(socket) {
         // check that they have a nickname set
         if(!socket.nickname) return;
 
-        // if they do, remove them from the nicknames array
-        nicknames.splice(nicknames.indexOf(socket.nickname), 1);
+        // if they do, delete user
+        delete users[socket.nickname];
 
         // update user list on the client side
         updateNicknames();
