@@ -68,7 +68,15 @@ io.sockets.on('connection', function(socket) {
     // first parameter for some limitations of what to find as in querying all
     // messages with 'nick: "Louis"' for instance. Adds a callback function
     // taking an error and docs.
-    Chat.find({}, function(err, docs) {
+
+    var query = Chat.find({});
+
+    // limit the number of messages to retrieve and wait for execution later
+    // by making the query execute manually
+    // Also, sort the query by "created" field and descending to see the most
+    // recent down with '-created'.
+    // On client side make sure that latest message is displayed last on list.
+    query.sort('-created').limit(8).exec(function(err, docs) {
 
         // if there's an error, throw it
         if(err) throw err;
