@@ -9,11 +9,47 @@ var express = require('express'),
     // create the socket functionality and maake it listen our http object
     io = require('socket.io').listen(server),
 
+    // include mongoose
+    mongoose = require('mongoose'),
+
     // object of nicknames
     users = {};
 
 // tell the server what port to listen on
 server.listen(3000);
+
+// connect to our mongoDB database passing in a mongoDb URI
+// MongoDb default port is 27107
+// We can add user authentication later here!!!
+mongoose.connect('mongodb://localhost/chat', function(err) {
+
+    // check if there is an error
+    if(err) {
+        console.log(err);
+    } else {
+        console.log('Connected to mongodb!');
+    }
+});
+
+// create a schema. mongodb doesnt store data in tables but in collections of
+// documents that have a certain type of structure. We define that stucture in a
+// schema.
+var chatSchema = mongoose.Schema({
+
+    // whatever data we want to save from our app. define type for each of the
+    // fields
+    nick: String,
+    msg: String,
+
+    // create time of when message was sent
+    created: {type: Date, default: Date.now}
+
+});
+
+// create a mongoose model. It creates a collection called Message (turned into a
+// plural form when collecions are created) inside the database and use the schema
+// we defined for that collection.
+var Chat = mongoose.model('Message', chatSchema);
 
 // create a route to access our pages. function takes in http request
 // and response as parameters.
@@ -28,8 +64,21 @@ app.get('/', function(req, res) {
 // application, they turn on a connection event and they have their own socket
 io.sockets.on('connection', function(socket) {
 
+    // retrieve messages as soon as a new user connects by querying in mongoose
+    // first parameter for some limitations of what to find as in querying all
+    // messages with 'nick: "Louis"' for instance. Adds a callback function
+    // taking an error and docs.
+    Chat.find({}, function(err, docs) {
+
+        // if there's an error, throw it
+        if(err) throw err;
+
+        // if no error, emit the documents
+        socket.emit('Load old messages', docs);
+    });
+
     // receive event on nicknames. we also pass in callback because we're
-    // sending data back to the client from this function
+    // sending data back to the client from this function.
     socket.on('new user', function (data, callback) {
 
         // check if user name entered in array
@@ -117,9 +166,27 @@ io.sockets.on('connection', function(socket) {
 
 
         } else {
-            // send trimmed message ('msg' and not the entire 'data')to all the other users. Create a name ('new message')
-            // for the events to broadcast to other users.
-            io.sockets.emit('new message', {msg: msg, nick: socket.nickname});
+
+          // create a new document to save using the name of our model
+          // we don't have to include the date ecause we already defined
+          // the default in our schema.
+          var newMsg = new Chat({msg: msg, nick: socket.nickname});
+
+          // save the document to the database (the callback function
+          // takes an error)
+          newMsg.save(function(err) {
+
+              // if there's an error, just throw it
+              if(err) throw err;
+
+              // if no error, emit the newMsg
+              // send trimmed message ('msg' and not the entire 'data')to all the other users. Create a name ('new message')
+              // for the events to broadcast to other users.
+              io.sockets.emit('new message', {msg: msg, nick: socket.nickname});
+
+          });
+
+
         }
 
     });

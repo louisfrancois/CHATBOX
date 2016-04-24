@@ -87,7 +87,7 @@
             // receive the usernames on the client side
             socket.on('usernames', function(data) {
                 var name_html = '';
-                for (i=0; i < data.length; i++) {
+                for (var i=0; i < data.length; i++) {
                     name_html += data[i] + '<br/>'
                 }
 
@@ -113,19 +113,37 @@
                 $messageBox.val('');
             });
 
+            // receive old messages from database
+            socket.on('Load old messages', function(docs) {
+                // docs are an array of all the documents received
+                for(var i=0; i < docs.length; i++) {
+
+                    // display the message so we can see it
+                    displayMsg(docs[i]);
+                }
+
+            })
+
             // receive the message on the client side
             socket.on('new message', function(data) {
 
                 // display the message so we can see it
-                $chat.append('<span class="msg"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
+                displayMsg(data);
 
             });
+
+            function displayMsg(data) {
+
+                // display the message so we can see it
+                $chat.append('<span class="msg"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
+            }
+
 
             // receive the whisper on the client side
             socket.on('whisper', function(data) {
 
-              // display the message styled differently
-              $chat.append('<span class="whisper"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
+                // display the message styled differently
+                $chat.append('<span class="whisper"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
 
             });
 
