@@ -77,10 +77,10 @@ io.sockets.on('connection', function(socket) {
     socket.on('disconnect', function(data) {
 
         // check that they have a nickname set
-        if(!socket.nicknames) return;
+        if(!socket.nickname) return;
 
         // if they do, remove them from the nicknames array
-        nicknames.splice(nicknames.indexOf(socket.nicknames), 1);
+        nicknames.splice(nicknames.indexOf(socket.nickname), 1);
 
         // update user list on the client side
         updateNicknames();
