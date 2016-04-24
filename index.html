@@ -5,14 +5,38 @@
         #chat {
             height: 500px;
         }
+        #contentWrap {
+            display: none;
+        }
+        #chatWrap {
+            float: left;
+            border: 1px #000 solid;
+        }
     </style>
 </head>
 <body>
-    <div id="chat"></div>
-    <form id="send-message">
-      <input size="35" id="message"/>
-      <input type="submit" />
-    </form>
+    <div id="nickWrap">
+        <p>
+          Enter a username:
+        </p>
+        <p id="setError"></p>
+        <form id="setNick">
+          <input size="35" id="nickname" autocomplete="off"/>
+          <input type="submit" />
+        </form>
+    </div>
+
+    <div id="contentWrap">
+        <div id="chatWrap">
+            <div id="chat"></div>
+            <form id="send-message">
+                <input size="35" id="message" autocomplete="off"/>
+                <input type="submit" />
+            </form>
+        </div>
+        <div id="users"></div>
+    </div>
+
     <script src="http://code.jquery.com/jquery-latest.min.js"></script>
 
     <!-- Socket IO generator -->
@@ -25,9 +49,28 @@
             var socket = io.connect();
 
             // variables
+            var $nickForm = $('#setNick');
+            var $nickError = $('#nickError');
+            var $nickBox = $('#nickname');
             var $messageForm = $('#send-message');
             var $messageBox = $('#message');
             var $chat = $('#chat');
+
+            // attach an event handler to the nickname form
+            $nickForm.submit(function(e) {
+
+              // prevent the form to submit and refresh the page
+              e.preventDefault();
+
+              // if nickname valid, show chat
+              socket.emit('new user', $messageBox.val(), function(data) {
+
+              });
+
+              // clear nickBox's value
+              $nickBox.val('');
+
+            })
 
             // bind the event handler to the messageForm by attaching
             // a submit handler to the messageForm

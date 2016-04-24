@@ -7,7 +7,10 @@ var express = require('express'),
     server = require('http').createServer(app),
 
     // create the socket functionality and maake it listen our http object
-    io = require('socket.io').listen(server);
+    io = require('socket.io').listen(server),
+
+    // array of nicknames
+    nicknames = [];
 
 // tell the server what port to listen on
 server.listen(3000);
@@ -24,6 +27,25 @@ app.get('/', function(req, res) {
 // receive the event on the server side. Whenever a client connects to a socket.io
 // application, they turn on a connection event
 io.sockets.on('connection', function(socket) {
+
+    // receive event on nicknames. we also pass in callback because we're
+    // sending data back to the client from this function
+    socket.on('new user', function (data, callback) {
+
+        // check if user name entered in array
+        if (nicknames.indexOf(data) != -1) {
+
+            // send false back to the callback if index of whatever inputed
+            // nickname not existant
+            callback(false);
+
+        } else {
+            // if not in the array, add nickname to the socket (each user has their
+            // socket) basically storing the nickname of each user.
+        }
+
+    });
+
 
     // do something with our sent data (in 'send message') by using a function
     socket.on('send message', function(data) {
