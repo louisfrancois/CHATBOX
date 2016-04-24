@@ -21,7 +21,7 @@ app.get('/', function(req, res) {
 
     // client will need to get the index.html file whenever he goes
     // to localhost:8080
-    res.sendfile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/index.html');
 });
 
 // receive the event on the server side. Whenever a client connects to a socket.io
@@ -40,11 +40,28 @@ io.sockets.on('connection', function(socket) {
             callback(false);
 
         } else {
+            callback(true);
             // if not in the array, add nickname to the socket (each user has their
-            // socket) basically storing the nickname of each user.
+            // socket) basically storing the nickname of each user. Have it has a
+            // property of the socket.
+            socket.nickname = data;
+
+            // push this value onto the array
+            nicknames.push(socket.nickname);
+
+            // update user list on the client side
+            updateNicknames();
         }
 
     });
+
+    function updateNicknames() {
+
+      // emit nicknames array to all the users so that they can updates
+      // their list when someone joins
+      io.sockets.emit('usernames', nicknames);
+
+    }
 
 
     // do something with our sent data (in 'send message') by using a function
@@ -52,7 +69,21 @@ io.sockets.on('connection', function(socket) {
 
         // send message to all the other users. Create a name ('new message')
         // for the events to broadcast to other users.
-        io.sockets.emit('new message', data);
+        io.sockets.emit('new message', {msg: data, nick: socket.nickname});
+
+    });
+
+    // create a way to get rid of users when they disconnect
+    socket.on('disconnect', function(data) {
+
+        // check that they have a nickname set
+        if(!socket.nicknames) return;
+
+        // if they do, remove them from the nicknames array
+        nicknames.splice(nicknames.indexOf(socket.nicknames), 1);
+
+        // update user list on the client side
+        updateNicknames();
 
     });
 });

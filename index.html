@@ -16,10 +16,8 @@
 </head>
 <body>
     <div id="nickWrap">
-        <p>
-          Enter a username:
-        </p>
-        <p id="setError"></p>
+        <p>Enter a username:</p>
+        <p id="nickError"></p>
         <form id="setNick">
           <input size="35" id="nickname" autocomplete="off"/>
           <input type="submit" />
@@ -52,6 +50,7 @@
             var $nickForm = $('#setNick');
             var $nickError = $('#nickError');
             var $nickBox = $('#nickname');
+            var $users = $("#users");
             var $messageForm = $('#send-message');
             var $messageBox = $('#message');
             var $chat = $('#chat');
@@ -62,15 +61,32 @@
               // prevent the form to submit and refresh the page
               e.preventDefault();
 
-              // if nickname valid, show chat
-              socket.emit('new user', $messageBox.val(), function(data) {
-
+              // if nickname valid (if 'data' value from callback on
+              // server side is true), show chat
+              socket.emit('new user', $nickBox.val(), function(data) {
+                  if (data) {
+                      $('#nickWrap').hide();
+                      $('#contentWrap').show();
+                  } else {
+                      $nickError.html('That username is already taken! Try again.');
+                  }
               });
 
               // clear nickBox's value
               $nickBox.val('');
 
             })
+
+            // receive the usernames on the client side
+            socket.on('usernames', function(data) {
+                var name_html = '';
+                for (i=0; i < data.length; i++) {
+                    name_html += data[i] + '<br/>'
+                }
+
+                // add in the string we created to the user div
+                $users.html(name_html);
+            });
 
             // bind the event handler to the messageForm by attaching
             // a submit handler to the messageForm
@@ -90,7 +106,7 @@
             socket.on('new message', function(data) {
 
                 // display the message so we can see it
-                $chat.append(data + "<br/>");
+                $chat.append('<b>' + data.nick + ': </b>' + data.msg + "<br/>");
 
             });
 
